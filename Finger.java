@@ -1,18 +1,22 @@
-import java.net.URL;
-
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
-
 public class Finger {
+
+	private final long startKey;
+	
+	private NodeData nodeData;
+	
+	public Finger(final long startKey){
+		this.startKey = startKey;
+	}
+	
 	public long getStart(){
-		throw new NotImplementedException();
+		return startKey;
 	}
 
 	public NodeData getNodeData() {
-		throw new NotImplementedException();
+		return nodeData;
 	}
 
-	public void setNodeData(NodeData nodeData){
-		throw new NotImplementedException();
+	public void setNodeData(final NodeData nodeData){
+		this.nodeData = nodeData;
 	}
 }

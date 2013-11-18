@@ -4,6 +4,10 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 
 public class NodeData {
+	public int getHashBitness() { 
+		throw new NotImplementedException();
+	}
+
 	public long getNodeKey(){
 		throw new NotImplementedException();
 	}
