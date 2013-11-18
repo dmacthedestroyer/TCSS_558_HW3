@@ -1,18 +1,27 @@
 import java.net.URL;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
-
 public class NodeData {
+	private final int hashBitness;
+	
+	private final URL url;
+	
+	private final long hash;
+	
+	public NodeData(final int hashBitness, final URL url){
+		this.hashBitness = hashBitness;
+		this.url = url;
+		this.hash = new KeyHash<URL>(url, hashBitness).getHash();
+	}
+	
 	public int getHashBitness() { 
-		throw new NotImplementedException();
+		return hashBitness;
 	}
 
 	public long getNodeKey(){
-		throw new NotImplementedException();
+		return hash;
 	}
 	
 	public URL getURL(){
-		throw new NotImplementedException();
+		return url;
 	}
 }

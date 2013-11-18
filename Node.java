@@ -1,3 +1,5 @@
+import java.net.URL;
+
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class Node {
@@ -10,7 +12,11 @@ public class Node {
 
 	private FingerTable fingerTable;
 
-	public Node() { }
+	public Node(Node fromNetwork, URL url) {
+		this.nodeData =  new NodeData(fromNetwork.nodeData.getHashBitness(), url);
+		this.fingerTable = new FingerTable(this.nodeData);
+		join(fromNetwork);
+	}
 
 	/**
 	 * TODO: I'm not sure how the best way to handle joins should be
