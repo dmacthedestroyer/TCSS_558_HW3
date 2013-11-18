@@ -4,17 +4,15 @@ public class Node {
 	/**
 	 * AKA 'm', from the paper
 	 */
-	private  int hashBitness;
-
+	private int hashBitness;
+	
 	private NodeData nodeData;
 
 	private NodeData predecessor;
 	
 	private FingerTable fingerTable;
 
-	public Node(){
-		
-	}
+	public Node() { }
 
 	/**
 	 * TODO: I'm not sure how the best way to handle joins should be
@@ -32,6 +30,9 @@ public class Node {
 	 * @return
 	 */
 	private NodeData findSuccessor(NodeData ofNode, long forKey){
+		if(ofNode.getNodeKey() == nodeData.getNodeKey())
+			return fingerTable.getSuccessor().getNodeData();
+		
 		throw new NotImplementedException();
 	}
 	
@@ -42,6 +43,9 @@ public class Node {
 	 * @return
 	 */
 	public NodeData findClosestPrecedingFinger(NodeData ofNode, long forKey){
+		if(ofNode.getNodeKey() == nodeData.getNodeKey())
+			return findClosestPrecedingFinger(forKey);
+
 		throw new NotImplementedException();
 	}
 
