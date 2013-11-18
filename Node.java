@@ -8,8 +8,6 @@ public class Node {
 	
 	private NodeData nodeData;
 
-	private NodeData predecessor;
-	
 	private FingerTable fingerTable;
 
 	public Node() { }
@@ -19,7 +17,6 @@ public class Node {
 	 * @param fromNetwork
 	 */
 	public void join(Node fromNetwork){
-		predecessor = null;
 		fingerTable.getSuccessor().setNodeData(fromNetwork.findSuccessor(nodeData.getNodeKey()));
 	}
 	
@@ -70,23 +67,7 @@ public class Node {
 	
 	private void stabilize() {
 		 long x = findPredecessor(fingerTable.getSuccessor().getNodeData().getNodeKey()).getNodeKey();
-		 if(nodeData.getNodeKey() < x && x < fingerTable.getSuccessor().getNodeData().getNodeKey()) {
-			 fingerTable.getSuccessor().setNodeData(findSuccessor(x));
-		 }
-		 notifyNodeOfPotentialNewPredecessor(fingerTable.getSuccessor().getNodeData());
-	}
-	
-	/**
-	 * Make a network call to notify the given node that this node may be its new predecessor
-	 * @param node
-	 */
-	private void notifyNodeOfPotentialNewPredecessor(NodeData node){
-		throw new NotImplementedException();
-	}
-	
-	private void inspectPredecessor(NodeData potentialPredecessor){
-		if(this.predecessor == null || (this.predecessor.getNodeKey() < potentialPredecessor.getNodeKey() && potentialPredecessor.getNodeKey() < nodeData.getNodeKey()))
-			this.predecessor = potentialPredecessor;
+		 fingerTable.getSuccessor().setNodeData(findSuccessor(x));
 	}
 	
 	private void fixFinger(){
