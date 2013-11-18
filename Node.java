@@ -1,31 +1,57 @@
 import java.net.URL;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
-public class Node {
-	/**
-	 * AKA 'm', from the paper
-	 */
-	private int hashBitness;
-	
+public abstract class Node {
 	private NodeData nodeData;
 
 	private FingerTable fingerTable;
 
-	public Node(Node fromNetwork, URL url) {
-		this.nodeData =  new NodeData(fromNetwork.nodeData.getHashBitness(), url);
+	/**
+	 * Creates the first node in a Chord network.
+	 * @param hashBitness the logarithm of the total number of nodes in the network (to base 2)
+	 * @param url this node's URL, and where other nodes may reach it
+	 */
+	protected Node(int hashBitness, URL url) {
+		if(url == null)
+			throw new NullPointerException("'url' must not be null");
+		
+		this.nodeData = new NodeData(hashBitness, url);
+		
+		if(lookupNode(this.nodeData) != null)
+			throw new IllegalArgumentException("There is already a node registered in this network for the url provided at " + url);
+
 		this.fingerTable = new FingerTable(this.nodeData);
-		join(fromNetwork);
+		for(Finger f : fingerTable)
+			f.setNodeData(this.nodeData);
+	}
+	
+	/**
+	 * Creates a new node to join the network that fromNetwork exists in.
+	 * @param fromNetwork an arbitrary node in the network
+	 * @param url this node's URL, and where other nodes may reach it
+	 */
+	protected Node(Node fromNetwork, URL url) {
+		if(fromNetwork == null)
+			throw new NullPointerException("'fromNetwork' must not be null");
+		if(url == null)
+			throw new NullPointerException("'url' must not be null");
+		
+		this.nodeData =  new NodeData(fromNetwork.nodeData.getHashBitness(), url);
+		if(lookupNode(this.nodeData) != null)
+			throw new IllegalArgumentException("There is already a node registered in this network for the url provided at " + url);
+
+		this.fingerTable = new FingerTable(this.nodeData);
+		for(Finger f: fingerTable)
+			f.setNodeData(fromNetwork.findSuccessor(f.getStart()));
+		fingerTable.getSuccessor().setNodeData(fromNetwork.findSuccessor(nodeData.getNodeKey()));
 	}
 
 	/**
-	 * TODO: I'm not sure how the best way to handle joins should be
-	 * @param fromNetwork
+	 * Returns a Node object from the network with the specified identity information, or null if no Node exists
+	 * @param node
+	 * @return
 	 */
-	public void join(Node fromNetwork){
-		fingerTable.getSuccessor().setNodeData(fromNetwork.findSuccessor(nodeData.getNodeKey()));
-	}
-	
+	public abstract Node lookupNode(NodeData node);
+		
 	/**
 	 * Make a network call to find the successor of the given node for the given key
 	 * @param ofNode
@@ -36,7 +62,7 @@ public class Node {
 		if(ofNode.getNodeKey() == nodeData.getNodeKey())
 			return fingerTable.getSuccessor().getNodeData();
 		
-		throw new NotImplementedException();
+		return lookupNode(ofNode).findSuccessor(forKey);
 	}
 	
 	/**
@@ -49,7 +75,7 @@ public class Node {
 		if(ofNode.getNodeKey() == nodeData.getNodeKey())
 			return findClosestPrecedingFinger(forKey);
 
-		throw new NotImplementedException();
+		return lookupNode(ofNode).findClosestPrecedingFinger(forKey);
 	}
 
 	public NodeData findSuccessor(long key){
