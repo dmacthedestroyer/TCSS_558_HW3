@@ -27,7 +27,8 @@ public class RMIController {
         } else {
             int port = Integer.parseInt(args[0]);
             Registry registry = LocateRegistry.createRegistry(port);
-            registry.bind(LOGGER_REGISTRY_NAME, UnicastRemoteObject.exportObject(new RemoteLogger(), 0));
+            RemoteLogger fodder = new RemoteLogger();
+            registry.bind(LOGGER_REGISTRY_NAME, UnicastRemoteObject.exportObject(fodder, 0));
             Log.out("Initialized registry on port " + port);
         }
 	}
