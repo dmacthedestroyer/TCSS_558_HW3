@@ -1,0 +1,25 @@
+Assignment 3
+Executive Summary 
+TCSS 558: Applied Distributed Systems, Spring 2013
+
+
+Assignment Overview
+
+(Describe your understanding of the purpose and scope of the assignment in 250 words or less. The word count is not strict, so don't worry about going slightly over.)
+
+The purpose of the assignment is to develop a design and class skeletons for an implementation of a distributed hash table using the Chord protocol. The Chord protocol involves using a peer-to-peer network of nodes to distribute the objects that will be maintained in the table. RMI is used in the system to facilitate client communication with the Chord network, but communication between nodes is accomplished asynchronously by other protocols (e.g., TCP). The functionality delivered in this assignment will include (1) creating the RMI registry with which nodes can register (2) nodes being able to find their successors and communicate with neighbors (3) obtain remote references to their neighbors (4) log this information to their log files.
+
+
+Technical Impression
+
+(Describe what you have done to complete the assignment in 200-500 words. The word count is not strict, so don't worry about going slightly over. You can share your personal experiences, things that particularly frustrated you about the assignment, things that particularly interested you about the assignment, etc. It is especially important that you document any difficulties you had with tools, Java libraries, etc.)
+
+We had challenges reading and interpreting the Chord protocol paper, particularly the areas of pseudocode. Eventually we were able to understand and use it, and this informed our design. We also looked at example implementations of the Chord protocol in Java to see how things had been done in other instances, while maintaining our own flavour of development. (It wasn't difficult to retain originality since things like RMI were required for the class assignment, which wasn't the case in the sample implementations.)
+
+There was some confusion surrounding the use of RMI in the assignment. We had initially thought that the implementation would use RMI to communicate between nodes, but it turned out that this would not be acceptable due to the synchronous nature of RMI. We also struggled with the implementation of the protocol.
+
+Team Report
+
+(Describe the contributions each member of the team made to the completion of this assignment, in 200-500 words)
+
+Dan did significant work on writing the code for the class skeletons. Sven worked on a draft of the design document and descriptions of the classes. Jesse contributed to these and wrote a draft of the executive summary. All members of the team contributed to development of the design, reading and discussing the provided Chord document and the pseudocode to reinforce a shared understanding of the system. We collaborated on development of pseudocode for the implementation of the class skeletons and functionality.
