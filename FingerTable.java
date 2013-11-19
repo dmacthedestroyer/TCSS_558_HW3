@@ -15,7 +15,7 @@ public class FingerTable implements Iterable<Finger> {
 
 	public FingerTable(NodeData forNode) {
 		fingers = new ArrayList<Finger>();
-		for (int i = 0; i < forNode.getHashBitness(); i++)
+		for (int i = 0; i < forNode.getHashLength(); i++)
 			fingers.add(new Finger((long) (forNode.getNodeKey() + Math.pow(2, i))));
 	}
 
