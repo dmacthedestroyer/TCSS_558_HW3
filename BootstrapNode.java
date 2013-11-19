@@ -49,7 +49,6 @@ public class BootstrapNode {
 			port = incrediblyInefficientMeansOfAcquiringAPortNumber.getLocalPort();
 			incrediblyInefficientMeansOfAcquiringAPortNumber.close();
 		}
-		Log.out("port: " + port);
 		return new InetSocketAddress(localhost, port);
 	}
 
