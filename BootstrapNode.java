@@ -1,5 +1,8 @@
+import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.UnknownHostException;
+import java.rmi.AlreadyBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -22,42 +25,19 @@ public class BootstrapNode {
 	 * 
 	 * @throws MalformedURLException
 	 * @throws RemoteException
+	 * @throws AlreadyBoundException 
+	 * @throws UnknownHostException 
 	 */
-	public static void main(String[] args) throws MalformedURLException,
-			RemoteException {
-		if (args.length != 4) {
-			Log.err("Usage: BootstrapNode <registryPort> <nodeHostname> <nodePort> <nodeName>");
+	public static void main(String[] args) throws MalformedURLException, RemoteException, AlreadyBoundException, UnknownHostException {
+		if (args.length != 2) {
+			Log.err("Usage: BootstrapNode <registryAddress> <registryPort>");
 		} else {
-			int registryPort = Integer.parseInt(args[0]);
-			String nodeHostname = args[1];
-			int nodePort = Integer.parseInt(args[2]);
-			String nodeName = args[3];
+			String registryHostname = args[0];
+			int registryPort = Integer.parseInt(args[1]);
 
-			RMINode node = new RMINode(4, createURL(nodePort, nodeHostname));
-			RMINodeServer stub = (RMINodeServer) UnicastRemoteObject
-					.exportObject(node, 0);
-			Registry fakeDNS = LocateRegistry.getRegistry(registryPort);
-			fakeDNS.rebind(nodeName, stub);
+			RMINode node = new RMINode(4, InetAddress.getLocalHost());
+			Registry fakeDNS = LocateRegistry.getRegistry(registryHostname, registryPort);
+			fakeDNS.bind("" + node.getNodeKey(), UnicastRemoteObject.exportObject(node, 0));
 		}
 	}
-
-	/**
-	 * Creates a URL given a port and hostname.
-	 * 
-	 * @param port
-	 *            The port.
-	 * @param host
-	 *            The host name.
-	 * @return A URL object.
-	 */
-	protected static URL createURL(int port, String host) {
-		URL url = null;
-		try {
-			url = new URL("http", host, port, null);
-		} catch (MalformedURLException e) {
-			Log.err(e.getMessage());
-		}
-		return url;
-	}
-
 }

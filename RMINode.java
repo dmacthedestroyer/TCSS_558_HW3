@@ -1,4 +1,5 @@
 import java.io.Serializable;
+import java.net.InetAddress;
 import java.net.URL;
 import java.rmi.RemoteException;
 
@@ -19,12 +20,12 @@ public class RMINode implements RMINodeServer {
 	 * @param hashLength the logarithm of the total number of nodes in the network (to base 2)
 	 * @param url this node's URL, and where other nodes may reach it
 	 */
-	public RMINode(int hashLength, URL url) throws RemoteException {
+	public RMINode(int hashLength, InetAddress url) throws RemoteException {
 		if(url == null)
 			throw new NullPointerException("'url' must not be null");
 		
 		this.hashLength = hashLength;
-		this.nodeKey = new KeyHash<URL>(url, hashLength).getHash();
+		this.nodeKey = new KeyHash<InetAddress>(url, hashLength).getHash();
 		fingerTable = new FingerTable(this);
 		for(Finger f: fingerTable)
 			f.setNode(this);
@@ -35,14 +36,14 @@ public class RMINode implements RMINodeServer {
 	 * @param fromNetwork an arbitrary node in the network
 	 * @param url this node's URL, and where other nodes may reach it
 	 */
-	public RMINode(RMINodeServer fromNetwork, URL url) throws RemoteException {
+	public RMINode(RMINodeServer fromNetwork, InetAddress url) throws RemoteException {
 		if(fromNetwork == null)
 			throw new NullPointerException("'fromNetwork' must not be null");
 		if(url == null)
 			throw new NullPointerException("'url' must not be null");
 
 		hashLength = fromNetwork.getHashLength();
-		nodeKey = new KeyHash<URL>(url, hashLength).getHash();
+		nodeKey = new KeyHash<InetAddress>(url, hashLength).getHash();
 		fingerTable = new FingerTable(this);
 		for(Finger f: fingerTable)
 			fixFinger(f);
