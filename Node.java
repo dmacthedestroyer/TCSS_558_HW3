@@ -60,7 +60,7 @@ public abstract class Node {
 	 */
 	private NodeData findSuccessor(NodeData ofNode, long forKey){
 		if(ofNode.getNodeKey() == nodeData.getNodeKey())
-			return fingerTable.getSuccessor().getNodeData();
+			return fingerTable.getSuccessor().getNode();
 		
 		return lookupNode(ofNode).findSuccessor(forKey);
 	}
@@ -91,14 +91,14 @@ public abstract class Node {
 	
 	private NodeData findClosestPrecedingFinger(long key){
 		for(Finger f : fingerTable.reverse()){
-			if(nodeData.getNodeKey() <  f.getNodeData().getNodeKey() && f.getNodeData().getNodeKey() < key)
-				return f.getNodeData();
+			if(nodeData.getNodeKey() <  f.getNode().getNodeKey() && f.getNode().getNodeKey() < key)
+				return f.getNode();
 		}
 		return nodeData;
 	}
 	
 	private void stabilize() {
-		 long x = findPredecessor(fingerTable.getSuccessor().getNodeData().getNodeKey()).getNodeKey();
+		 long x = findPredecessor(fingerTable.getSuccessor().getNode().getNodeKey()).getNodeKey();
 		 fingerTable.getSuccessor().setNodeData(findSuccessor(x));
 	}
 	

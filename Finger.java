@@ -2,7 +2,7 @@ public class Finger {
 
 	private final long startKey;
 	
-	private NodeData nodeData;
+	private RMINodeServer node;
 	
 	public Finger(final long startKey){
 		this.startKey = startKey;
@@ -12,11 +12,11 @@ public class Finger {
 		return startKey;
 	}
 
-	public NodeData getNodeData() {
-		return nodeData;
+	public RMINodeServer getNode() {
+		return node;
 	}
 
-	public void setNodeData(final NodeData nodeData){
-		this.nodeData = nodeData;
+	public void setNode(final RMINodeServer node){
+		this.node = node;
 	}
 }

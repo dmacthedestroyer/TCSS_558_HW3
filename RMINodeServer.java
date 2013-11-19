@@ -1,6 +1,11 @@
 import java.rmi.RemoteException;
 
 public interface RMINodeServer extends RMINodeClient {
+
+	public int getHashLength();
+	
+	public long getNodeKey();
+	
 	/**
 	 * Finds the successor node for the given key
 	 * @param key
@@ -23,5 +28,5 @@ public interface RMINodeServer extends RMINodeClient {
 	 * @return
 	 * @throws RemoteException
 	 */
-	public RMINodeServer checkPredecessor(NodeData potentialPredecessor) throws RemoteException;
+	public void checkPredecessor(RMINodeServer potentialPredecessor) throws RemoteException;
 }

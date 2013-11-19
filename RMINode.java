@@ -6,6 +6,14 @@ import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class RMINode implements RMINodeServer {
 
+	private long nodeKey;
+	
+	private int hashLength;
+	
+	private FingerTable fingerTable;
+	
+	private RMINodeServer predecessor;
+	
 	/**
 	 * Creates the first node in a Chord network.
 	 * @param hashLength the logarithm of the total number of nodes in the network (to base 2)
@@ -15,7 +23,9 @@ public class RMINode implements RMINodeServer {
 		if(url == null)
 			throw new NullPointerException("'url' must not be null");
 		
-		throw new NotImplementedException();
+		this.hashLength = hashLength;
+		this.nodeKey = new KeyHash<URL>(url, hashLength).getHash();
+		fingerTable = new FingerTable(this);
 	}
 	
 	/**
@@ -23,42 +33,102 @@ public class RMINode implements RMINodeServer {
 	 * @param fromNetwork an arbitrary node in the network
 	 * @param url this node's URL, and where other nodes may reach it
 	 */
-	public RMINode(RMINode fromNetwork, URL url) {
+	public RMINode(RMINodeServer fromNetwork, URL url) throws RemoteException {
 		if(fromNetwork == null)
 			throw new NullPointerException("'fromNetwork' must not be null");
 		if(url == null)
 			throw new NullPointerException("'url' must not be null");
-		
+
+		hashLength = fromNetwork.getHashLength();
+		nodeKey = new KeyHash<URL>(url, hashLength).getHash();
+		fingerTable = new FingerTable(this);
+	}
+	
+	private boolean isInRange(long key){
 		throw new NotImplementedException();
 	}
 	
 	@Override
+	public long getNodeKey() { return nodeKey; }
+	
+	@Override
+	public int getHashLength() {
+		return hashLength;
+	}
+
+	@Override
 	public Serializable get(String key) throws RemoteException {
-		throw new NotImplementedException();
+		long hash = new KeyHash<String>(key, getHashLength()).getHash();
+		if(isInRange(hash))
+			throw new NotImplementedException();
+		return findSuccessor(hash).get(key);
 	}
 
 	@Override
 	public void put(String key, Serializable value) throws RemoteException {
-		throw new NotImplementedException();
+		long hash = new KeyHash<String>(key, getHashLength()).getHash();
+		if(isInRange(hash))
+			throw new NotImplementedException();
+		
+		findSuccessor(hash).put(key, value);
 	}
 
 	@Override
 	public void delete(String key) throws RemoteException {
-		throw new NotImplementedException();
+		long hash = new KeyHash<String>(key, getHashLength()).getHash();
+		if(isInRange(hash))
+			throw new NotImplementedException();
+
+		findSuccessor(hash).delete(key);
 	}
 
 	@Override
 	public RMINodeServer findSuccessor(long key) throws RemoteException {
-		throw new NotImplementedException();
+		if(isInRange(key))
+			return this;
+		
+		return findPredecessor(key).findSuccessor(key);
 	}
 
 	@Override
 	public RMINodeServer findPredecessor(long key) throws RemoteException {
-		throw new NotImplementedException();
+		for(Finger f : fingerTable.reverse())
+			if(f.getNode() != null && getNodeKey() < f.getNode().getNodeKey() && f.getNode().getNodeKey() < key)
+				try {
+					return f.getNode().findPredecessor(key);
+				} catch (RemoteException e) {
+					fixFinger(f);
+				}
+		return this;
 	}
 
 	@Override
-	public RMINodeServer checkPredecessor(NodeData potentialPredecessor) throws RemoteException {
-		throw new NotImplementedException();
+	public void checkPredecessor(RMINodeServer potentialPredecessor) throws RemoteException {
+		if(predecessor == null || (predecessor.getNodeKey() < potentialPredecessor.getNodeKey() && potentialPredecessor.getNodeKey() < getNodeKey()))
+			this.predecessor = potentialPredecessor;
+		//TODO: update range, reassign values, etc
+	}
+
+	private void fixFinger(Finger finger) {
+		try {
+			finger.setNode(findSuccessor(finger.getStart()));
+		} catch (RemoteException e) {
+			finger.setNode(null);
+		}
+	}
+	
+	private void stabilize() {
+		RMINodeServer successor = fingerTable.getSuccessor().getNode();
+		if(successor != null) {
+			try {
+				RMINodeServer successor_predecessor = successor.findPredecessor(successor.getNodeKey());
+				if(getNodeKey() < successor_predecessor.getNodeKey() && successor_predecessor.getNodeKey() < successor.getNodeKey())
+					fingerTable.getSuccessor().setNode(successor_predecessor);
+				fingerTable.getSuccessor().getNode().checkPredecessor(this);
+			} catch (RemoteException e) {
+				fixFinger(fingerTable.getSuccessor());
+				return;
+			}
+		}
 	}
 }
