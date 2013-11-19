@@ -7,14 +7,14 @@ public abstract class Node {
 
 	/**
 	 * Creates the first node in a Chord network.
-	 * @param hashBitness the logarithm of the total number of nodes in the network (to base 2)
+	 * @param hashLength the logarithm of the total number of nodes in the network (to base 2)
 	 * @param url this node's URL, and where other nodes may reach it
 	 */
-	protected Node(int hashBitness, URL url) {
+	protected Node(int hashLength, URL url) {
 		if(url == null)
 			throw new NullPointerException("'url' must not be null");
 		
-		this.nodeData = new NodeData(hashBitness, url);
+		this.nodeData = new NodeData(hashLength, url);
 		
 		if(lookupNode(this.nodeData) != null)
 			throw new IllegalArgumentException("There is already a node registered in this network for the url provided at " + url);
@@ -35,7 +35,7 @@ public abstract class Node {
 		if(url == null)
 			throw new NullPointerException("'url' must not be null");
 		
-		this.nodeData =  new NodeData(fromNetwork.nodeData.getHashBitness(), url);
+		this.nodeData =  new NodeData(fromNetwork.nodeData.getHashLength(), url);
 		if(lookupNode(this.nodeData) != null)
 			throw new IllegalArgumentException("There is already a node registered in this network for the url provided at " + url);
 
