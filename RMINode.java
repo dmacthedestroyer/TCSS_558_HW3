@@ -19,13 +19,15 @@ public class RMINode implements RMINodeServer {
 	 * @param hashLength the logarithm of the total number of nodes in the network (to base 2)
 	 * @param url this node's URL, and where other nodes may reach it
 	 */
-	public RMINode(int hashLength, URL url) {
+	public RMINode(int hashLength, URL url) throws RemoteException {
 		if(url == null)
 			throw new NullPointerException("'url' must not be null");
 		
 		this.hashLength = hashLength;
 		this.nodeKey = new KeyHash<URL>(url, hashLength).getHash();
 		fingerTable = new FingerTable(this);
+		for(Finger f: fingerTable)
+			f.setNode(this);
 	}
 	
 	/**
@@ -42,25 +44,34 @@ public class RMINode implements RMINodeServer {
 		hashLength = fromNetwork.getHashLength();
 		nodeKey = new KeyHash<URL>(url, hashLength).getHash();
 		fingerTable = new FingerTable(this);
+		for(Finger f: fingerTable)
+			fixFinger(f);
 	}
 	
-	private boolean isInRange(long key){
-		throw new NotImplementedException();
+	private boolean isInRange(long key) {
+		if(predecessor != null)
+			try {
+				return predecessor.getNodeKey() < key && key <= getNodeKey();
+			}
+			catch (RemoteException e){
+				predecessor = null; //if we got a remote exception, then the predecessor is no longer online
+			}
+		
+		return key == getNodeKey();
 	}
 	
 	@Override
 	public long getNodeKey() { return nodeKey; }
 	
 	@Override
-	public int getHashLength() {
-		return hashLength;
-	}
+	public int getHashLength() { return hashLength; }
 
 	@Override
 	public Serializable get(String key) throws RemoteException {
 		long hash = new KeyHash<String>(key, getHashLength()).getHash();
 		if(isInRange(hash))
 			throw new NotImplementedException();
+
 		return findSuccessor(hash).get(key);
 	}
 
@@ -93,12 +104,14 @@ public class RMINode implements RMINodeServer {
 	@Override
 	public RMINodeServer findPredecessor(long key) throws RemoteException {
 		for(Finger f : fingerTable.reverse())
-			if(f.getNode() != null && getNodeKey() < f.getNode().getNodeKey() && f.getNode().getNodeKey() < key)
-				try {
+			try {
+				if(f.getNode() != null && getNodeKey() < f.getNode().getNodeKey() && f.getNode().getNodeKey() < key)
 					return f.getNode().findPredecessor(key);
-				} catch (RemoteException e) {
-					fixFinger(f);
 				}
+			catch (RemoteException e) {
+				fixFinger(f);
+			}
+		
 		return this;
 	}
 
