@@ -17,8 +17,8 @@ public class BootstrapNode {
 	 * Main method.
 	 * 
 	 * @param args
-	 *            String arguments; expects the name of the node and the port of
-	 *            the registry, respectively.
+	 *            String arguments; expects (1) the port of the registry (2) the hostname (3) the port
+	 *            this node will use (4) the name of the node.
 	 * 
 	 * @throws MalformedURLException
 	 * @throws RemoteException
