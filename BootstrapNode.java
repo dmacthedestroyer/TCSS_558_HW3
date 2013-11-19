@@ -37,7 +37,7 @@ public class BootstrapNode {
 
 			RMINode node = new RMINode(4, InetAddress.getLocalHost());
 			Registry fakeDNS = LocateRegistry.getRegistry(registryHostname, registryPort);
-			fakeDNS.bind("" + node.getNodeKey(), UnicastRemoteObject.exportObject(node, 0));
+			fakeDNS.rebind("" + node.getNodeKey(), UnicastRemoteObject.exportObject(node, 0));
 		}
 	}
 }
