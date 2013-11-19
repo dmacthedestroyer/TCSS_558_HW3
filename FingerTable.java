@@ -39,6 +39,22 @@ public class FingerTable implements Iterable<Finger> {
 		return fingers.iterator();
 	}
 
+	@Override
+	public String toString() {
+		String s = "";
+		for(Finger f: this) {
+			s += f.getStart() + ":";
+			try{
+			s += f.getNode().getNodeKey();
+			} catch(RemoteException re){
+				s += "<empty>";
+			}
+			s += "\t";
+		}
+		
+		return s;
+	}
+	
 	/**
 	 * An iterator for lists that allows the programmer to traverse the list in
 	 * reverse order.
