@@ -6,7 +6,7 @@ public class KeyHash<T> {
 	
 	public KeyHash(T key, int bitness){
 		this.key = key;
-		this.hash = key.hashCode() % bitness;
+		this.hash = (long) (Math.abs(key.hashCode()) % Math.pow(2, bitness));
 	}
 	
 	public T getKey() { return key; }
