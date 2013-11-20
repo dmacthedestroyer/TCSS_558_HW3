@@ -20,14 +20,14 @@ public class RMINode implements RMINodeServer {
 	private final ScheduledExecutorService periodicTask = Executors.newScheduledThreadPool(1);
 	
 	public String internalState(){
-		String s = "m:" + getHashLength() + "\t n:" + getNodeKey() + "\tp:";
+		String s = "n:" + getNodeKey() + " p:";
 		try{
 			s += predecessor.getNodeKey();
 		}
 		catch(Throwable t) {
 			s += "<none>";
 		}
-		return s + "\tf: " + fingerTable.toString();
+		return s + " f: " + fingerTable.toString();
 	}
 	
 	public RMINode(int hashLength, InetSocketAddress url) throws RemoteException {
@@ -69,6 +69,7 @@ public class RMINode implements RMINodeServer {
 					fixFinger(fingerTable.getRandomFinger());
 				} catch(Throwable t){
 					Log.err("error running periodic task: " + t.getClass());
+					t.printStackTrace();
 				}
 			}
 		}, 5, 1, TimeUnit.SECONDS);
@@ -160,6 +161,10 @@ public class RMINode implements RMINodeServer {
 	
 	@Override
 	public RMINodeServer findPredecessor(long key) throws RemoteException {
+		//if the key belongs to our interval, then return our predecessor
+		if(isInRange(key))
+			return predecessor;
+		
 		//if the key belongs to the interval of our successor, then we're the predecessor
 		if(isWithinInterval(false, getNodeKey(), key, fingerTable.getSuccessor().getNode().getNodeKey(), true))
 			return this;

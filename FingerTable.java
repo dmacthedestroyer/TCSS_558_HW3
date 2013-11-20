@@ -51,7 +51,7 @@ public class FingerTable implements Iterable<Finger> {
 			} catch(NullPointerException | RemoteException e){
 				s += "<empty>";
 			}
-			s += "\t";
+			s += " ";
 		}
 		
 		return s;

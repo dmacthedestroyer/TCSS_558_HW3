@@ -33,8 +33,7 @@ public class TwoNodeTest {
 
 			RMINode seed = new RMINode(m, generateInetSocketAddress());
 			registry.bind("" + seed.getNodeKey(), UnicastRemoteObject.exportObject(seed, 0));
-			seed.join(null);			
-//			Log.out("seeded new chord network with node id " + seed.getNodeKey());
+			seed.join(null);
 			nodes.add(seed);
 			
 			for(int i=1; i<nodeCount; i++){
@@ -42,6 +41,7 @@ public class TwoNodeTest {
 				registry.bind("" + nodeI.getNodeKey(), UnicastRemoteObject.exportObject(nodeI, 0));
 				
 				nodeI.join(nodes.get(random.nextInt(nodes.size())));
+				nodes.add(nodeI);
 //				Log.out("Bound new node to id " + nodeI.getNodeKey());
 			}
         }
