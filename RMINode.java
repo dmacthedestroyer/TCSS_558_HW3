@@ -154,7 +154,7 @@ public class RMINode implements RMINodeServer {
 		
 		RMINodeServer predecessor = findPredecessor(key);
 		if(predecessor.getNodeKey() == getNodeKey())
-			return predecessor;
+			return fingerTable.getSuccessor().getNode();
 
 		return predecessor.findSuccessor(key);
 	}
