@@ -16,8 +16,10 @@ public class FingerTable implements Iterable<Finger> {
 
 	public FingerTable(RMINodeServer forNode) throws RemoteException {
 		fingers = new ArrayList<Finger>();
-		for (int i = 0; i < forNode.getHashLength(); i++)
-			fingers.add(new Finger((long) (forNode.getNodeKey() + Math.pow(2, i))));
+		int hashLength = forNode.getHashLength();
+		long maxValue = (long) Math.pow(2, hashLength);
+		for (int i = 0; i < hashLength; i++)
+			fingers.add(new Finger((long) ((forNode.getNodeKey() + Math.pow(2, i)) % maxValue)));
 	}
 
 	public Finger getSuccessor() {
