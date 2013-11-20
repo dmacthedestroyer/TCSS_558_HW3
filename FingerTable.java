@@ -29,7 +29,7 @@ public class FingerTable implements Iterable<Finger> {
 	}
 
 	public Finger getRandomFinger() {
-		return fingers.get(random.nextInt(fingers.size()));
+		return fingers.get(random.nextInt(fingers.size()-1)+1);
 	}
 
 	public Iterable<Finger> reverse() {
