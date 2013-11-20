@@ -16,20 +16,24 @@ public class RMINode implements RMINodeServer {
 	
 	private RMINodeServer predecessor;
 	
+	private void initialize(int hashLength, InetSocketAddress url) throws RemoteException{
+		this.hashLength = hashLength;
+		this.nodeKey = new KeyHash<InetSocketAddress>(url, hashLength).getHash();
+		fingerTable = new FingerTable(this);		
+	}
+	
 	/**
 	 * Creates the first node in a Chord network.
 	 * @param hashLength the logarithm of the total number of nodes in the network (to base 2)
 	 * @param url this node's URL, and where other nodes may reach it
 	 */
 	public RMINode(int hashLength, InetSocketAddress url) throws RemoteException {
-		if(url == null)
-			throw new NullPointerException("'url' must not be null");
+		initialize(hashLength, url);
 		
-		this.hashLength = hashLength;
-		this.nodeKey = new KeyHash<InetSocketAddress>(url, hashLength).getHash();
-		fingerTable = new FingerTable(this);
+		//this is currently the only node in the network, so set all fingers and predecessor to self
 		for(Finger f: fingerTable)
 			f.setNode(this);
+		predecessor = this;
 	}
 	
 	/**
@@ -38,22 +42,31 @@ public class RMINode implements RMINodeServer {
 	 * @param url this node's URL, and where other nodes may reach it
 	 */
 	public RMINode(RMINodeServer fromNetwork, InetSocketAddress url) throws RemoteException {
-		if(fromNetwork == null)
-			throw new NullPointerException("'fromNetwork' must not be null");
-		if(url == null)
-			throw new NullPointerException("'url' must not be null");
+		initialize(fromNetwork.getHashLength(), url);
 
-		hashLength = fromNetwork.getHashLength();
-		nodeKey = new KeyHash<InetSocketAddress>(url, hashLength).getHash();
-		fingerTable = new FingerTable(this);
+		fromNetwork.findSuccessor(getNodeKey()).checkPredecessor(this);
 		for(Finger f: fingerTable)
-			fixFinger(f);
+			f.setNode(fromNetwork.findSuccessor(f.getStart()));
+	}
+	
+	private boolean isWithinInterval(boolean leftInclusive, long left, long x, long right, boolean rightInclusive) {
+		//if left and right are the same, there is only one value in the set.  X must equal this, and the interval must be inclusive on both sides
+		if(left == right)
+			return left == x && leftInclusive && rightInclusive;
+		//if the x equals left or right, it must be inclusive on that side
+		boolean isBoundedOk = (leftInclusive || left != x) && (rightInclusive || right != x);
+		
+		//if left > right, then we're in a situation where the interval spans the end and beginning of the ring.  The logic is a bit different there
+		if(left > right)
+			return isBoundedOk && (left <= x || x <= right);
+		
+		return isBoundedOk && left <= x && x <= right;
 	}
 	
 	private boolean isInRange(long key) {
 		if(predecessor != null)
 			try {
-				return predecessor.getNodeKey() < key && key <= getNodeKey();
+				return isWithinInterval(false, predecessor.getNodeKey(), key, getNodeKey(), true);
 			}
 			catch (RemoteException e){
 				predecessor = null; //if we got a remote exception, then the predecessor is no longer online
@@ -65,9 +78,11 @@ public class RMINode implements RMINodeServer {
 	@Override
 	public long getNodeKey() { return nodeKey; }
 	
+	
 	@Override
 	public int getHashLength() { return hashLength; }
 
+	
 	@Override
 	public Serializable get(String key) throws RemoteException {
 		long hash = new KeyHash<String>(key, getHashLength()).getHash();
@@ -77,6 +92,7 @@ public class RMINode implements RMINodeServer {
 		return findSuccessor(hash).get(key);
 	}
 
+	
 	@Override
 	public void put(String key, Serializable value) throws RemoteException {
 		long hash = new KeyHash<String>(key, getHashLength()).getHash();
@@ -86,6 +102,7 @@ public class RMINode implements RMINodeServer {
 		findSuccessor(hash).put(key, value);
 	}
 
+	
 	@Override
 	public void delete(String key) throws RemoteException {
 		long hash = new KeyHash<String>(key, getHashLength()).getHash();
@@ -95,6 +112,7 @@ public class RMINode implements RMINodeServer {
 		findSuccessor(hash).delete(key);
 	}
 
+	
 	@Override
 	public RMINodeServer findSuccessor(long key) throws RemoteException {
 		if(isInRange(key))
@@ -103,11 +121,12 @@ public class RMINode implements RMINodeServer {
 		return findPredecessor(key).findSuccessor(key);
 	}
 
+	
 	@Override
 	public RMINodeServer findPredecessor(long key) throws RemoteException {
 		for(Finger f : fingerTable.reverse())
 			try {
-				if(f.getNode() != null && getNodeKey() < f.getNode().getNodeKey() && f.getNode().getNodeKey() < key)
+				if(f.getNode() != null && isWithinInterval(false, getNodeKey(), f.getNode().getNodeKey(), key, false))
 					return f.getNode().findPredecessor(key);
 				}
 			catch (RemoteException e) {
@@ -117,12 +136,14 @@ public class RMINode implements RMINodeServer {
 		return this;
 	}
 
+	
 	@Override
 	public void checkPredecessor(RMINodeServer potentialPredecessor) throws RemoteException {
-		if(predecessor == null || (predecessor.getNodeKey() < potentialPredecessor.getNodeKey() && potentialPredecessor.getNodeKey() < getNodeKey()))
+		if(predecessor == null || isWithinInterval(false, predecessor.getNodeKey(), potentialPredecessor.getNodeKey(), getNodeKey(), false))
 			this.predecessor = potentialPredecessor;
 		//TODO: update range, reassign values, etc
 	}
+	
 
 	private void fixFinger(Finger finger) {
 		try {
@@ -137,7 +158,7 @@ public class RMINode implements RMINodeServer {
 		if(successor != null) {
 			try {
 				RMINodeServer successor_predecessor = successor.findPredecessor(successor.getNodeKey());
-				if(getNodeKey() < successor_predecessor.getNodeKey() && successor_predecessor.getNodeKey() < successor.getNodeKey())
+				if(isWithinInterval(false, getNodeKey(), successor_predecessor.getNodeKey(), successor.getNodeKey(), false))
 					fingerTable.getSuccessor().setNode(successor_predecessor);
 				fingerTable.getSuccessor().getNode().checkPredecessor(this);
 			} catch (RemoteException e) {
