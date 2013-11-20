@@ -1,8 +1,9 @@
 import java.io.Serializable;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.URL;
 import java.rmi.RemoteException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
@@ -16,10 +17,36 @@ public class RMINode implements RMINodeServer {
 	
 	private RMINodeServer predecessor;
 	
+	private final ScheduledExecutorService periodicTask = Executors.newScheduledThreadPool(1);
+	
 	private void initialize(int hashLength, InetSocketAddress url) throws RemoteException{
 		this.hashLength = hashLength;
 		this.nodeKey = new KeyHash<InetSocketAddress>(url, hashLength).getHash();
 		fingerTable = new FingerTable(this);		
+		periodicTask.scheduleAtFixedRate(new Runnable() {
+			
+			@Override
+			public void run() {
+				try{
+					Log.out(internalState());
+					stabilize();
+					fixFinger(fingerTable.getRandomFinger());
+				} catch(Throwable t){
+					Log.err("error running periodic task: " + t.getClass());
+				}
+		}
+		}, 0, 10, TimeUnit.SECONDS);
+	}
+
+	public String internalState(){
+		String s = "m:" + getHashLength() + "\t n:" + getNodeKey() + "\tp:";
+		try{
+			s += predecessor.getNodeKey();
+		}
+		catch(Throwable t) {
+			s += "<none>";
+		}
+		return s + "\tf: " + fingerTable.toString();
 	}
 	
 	/**
