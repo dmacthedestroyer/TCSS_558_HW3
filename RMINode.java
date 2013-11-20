@@ -59,14 +59,13 @@ public class RMINode implements RMINodeServer {
 			@Override
 			public void run() {
 				try{
-					Log.out(internalState());
 					stabilize();
 					fixFinger(fingerTable.getRandomFinger());
 				} catch(Throwable t){
 					Log.err("error running periodic task: " + t.getClass());
 				}
 			}
-		}, 5, 10, TimeUnit.SECONDS);
+		}, 5, 1, TimeUnit.SECONDS);
 	}
 	
 	private boolean isWithinInterval(boolean leftInclusive, long left, long x, long right, boolean rightInclusive) {
@@ -168,19 +167,27 @@ public class RMINode implements RMINodeServer {
 				fixFinger(f);
 			}
 		
-		return this;
+		return predecessor.findPredecessor(key);
 	}
 
 	@Override
 	public void checkPredecessor(RMINodeServer potentialPredecessor) throws RemoteException {
-		if(predecessor == null || isWithinInterval(false, predecessor.getNodeKey(), potentialPredecessor.getNodeKey(), getNodeKey(), false))
+		if(predecessor == null || isWithinInterval(false, predecessor.getNodeKey(), potentialPredecessor.getNodeKey(), getNodeKey(), false)) {
 			this.predecessor = potentialPredecessor;
+			Log.out(getNodeKey() + ": new predecessor set to " + potentialPredecessor.getNodeKey());
+			Log.out(internalState());
 		//TODO: update range, reassign values, etc
+		}
 	}
 	
 	private void fixFinger(Finger finger) {
 		try {
-			finger.setNode(findSuccessor(finger.getStart()));
+			RMINodeServer successor = findSuccessor(finger.getStart());
+			if(finger.getNode() != null && finger.getNode().getNodeKey() != successor.getNodeKey()) {
+				finger.setNode(successor);
+				Log.out(getNodeKey() + ": finger at " + finger.getStart() + " set to " + successor.getNodeKey());
+				Log.out(internalState());
+			}
 		} catch (RemoteException e) {
 			finger.setNode(null);
 		}
@@ -191,8 +198,11 @@ public class RMINode implements RMINodeServer {
 		if(successor != null) {
 			try {
 				RMINodeServer successor_predecessor = successor.findPredecessor(successor.getNodeKey());
-				if(isWithinInterval(false, getNodeKey(), successor_predecessor.getNodeKey(), successor.getNodeKey(), false))
+				if(isWithinInterval(false, getNodeKey(), successor_predecessor.getNodeKey(), successor.getNodeKey(), false) && successor_predecessor.getNodeKey() != fingerTable.getSuccessor().getNode().getNodeKey()) {
 					fingerTable.getSuccessor().setNode(successor_predecessor);
+					Log.out(getNodeKey() + ": new successor set to " + successor_predecessor.getNodeKey());
+					Log.out(internalState());
+				}
 				fingerTable.getSuccessor().getNode().checkPredecessor(this);
 			} catch (RemoteException e) {
 				fixFinger(fingerTable.getSuccessor());
