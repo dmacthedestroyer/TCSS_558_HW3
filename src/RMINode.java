@@ -19,15 +19,16 @@ public class RMINode implements RMINodeServer {
 	
 	private final ScheduledExecutorService periodicTask = Executors.newScheduledThreadPool(1);
 	
-	public String internalState(){
-		String s = "n:" + getNodeKey() + " p:";
+	private void logState(String message){
+		String s = getNodeKey() + ": p=";
 		try{
 			s += predecessor.getNodeKey();
 		}
 		catch(Throwable t) {
-			s += "<none>";
+			s += "-";
 		}
-		return s + " f: " + fingerTable.toString();
+		
+		Log.out(s + " " + fingerTable.toString() + " --> " + message);
 	}
 	
 	public RMINode(int hashLength, InetSocketAddress url) throws RemoteException {
@@ -43,21 +44,20 @@ public class RMINode implements RMINodeServer {
 				throw new IllegalArgumentException("A node with this key already exists in the network");
 			
 			fingerTable.getSuccessor().setNode(successor);
+			predecessor = successor.findPredecessor(successor.getNodeKey());
 			successor.checkPredecessor(this);
-			checkPredecessor(fromNetwork.findPredecessor(getNodeKey()));
 			for(Finger f: fingerTable)
 				f.setNode(fromNetwork.findSuccessor(f.getStart()));
 
-			Log.out(getNodeKey() + ": new node added to network by " + fromNetwork.getNodeKey());
-			Log.out(internalState());		}
+			logState("node " + getNodeKey() + " added to network by " + fromNetwork.getNodeKey());
+		}
 		else {
 			//this is currently the only node in the network, so set all fingers and predecessor to self
 			for(Finger f: fingerTable)
 				f.setNode(this);
 			predecessor = this;
 
-			Log.out(getNodeKey() + ": new network created");
-			Log.out(internalState());		
+			logState("new network created by " + getNodeKey());		
 		}
 
 		periodicTask.scheduleAtFixedRate(new Runnable() {
@@ -185,8 +185,7 @@ public class RMINode implements RMINodeServer {
 	public void checkPredecessor(RMINodeServer potentialPredecessor) throws RemoteException {
 		if(predecessor == null || isWithinInterval(false, predecessor.getNodeKey(), potentialPredecessor.getNodeKey(), getNodeKey(), false)) {
 			this.predecessor = potentialPredecessor;
-			Log.out(getNodeKey() + ": new predecessor set to " + potentialPredecessor.getNodeKey());
-			Log.out(internalState());
+			logState(getNodeKey() + ".predecessor = " + potentialPredecessor.getNodeKey());
 		//TODO: update range, reassign values, etc
 		}
 	}
@@ -196,8 +195,7 @@ public class RMINode implements RMINodeServer {
 			RMINodeServer successor = findSuccessor(finger.getStart());
 			if(finger.getNode() != null && finger.getNode().getNodeKey() != successor.getNodeKey()) {
 				finger.setNode(successor);
-				Log.out(getNodeKey() + ": finger at " + finger.getStart() + " set to " + successor.getNodeKey());
-				Log.out(internalState());
+				logState(getNodeKey() + ".finger[" + finger.getStart() + "] = " + successor.getNodeKey());
 			}
 		} catch (RemoteException e) {
 			finger.setNode(null);
@@ -211,8 +209,7 @@ public class RMINode implements RMINodeServer {
 				RMINodeServer successor_predecessor = successor.findPredecessor(successor.getNodeKey());
 				if(isWithinInterval(false, getNodeKey(), successor_predecessor.getNodeKey(), successor.getNodeKey(), false) && successor_predecessor.getNodeKey() != fingerTable.getSuccessor().getNode().getNodeKey()) {
 					fingerTable.getSuccessor().setNode(successor_predecessor);
-					Log.out(getNodeKey() + ": new successor set to " + successor_predecessor.getNodeKey());
-					Log.out(internalState());
+					logState(getNodeKey() + ".successor = " + successor_predecessor.getNodeKey());
 				}
 				fingerTable.getSuccessor().getNode().checkPredecessor(this);
 			} catch (RemoteException e) {
