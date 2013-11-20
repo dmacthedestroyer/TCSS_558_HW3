@@ -1,6 +1,8 @@
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.rmi.RemoteException;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.rmi.AlreadyBoundException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
@@ -20,44 +22,34 @@ public class BootstrapNode {
 	 *            String arguments; expects (1) the port of the registry (2) the hostname (3) the port
 	 *            this node will use (4) the name of the node.
 	 * 
-	 * @throws MalformedURLException
-	 * @throws RemoteException
+	 * @throws AlreadyBoundException 
+	 * @throws IOException 
 	 */
-	public static void main(String[] args) throws MalformedURLException,
-			RemoteException {
-		if (args.length != 4) {
-			Log.err("Usage: BootstrapNode <registryPort> <nodeHostname> <nodePort> <nodeName>");
+	public static void main(String[] args) throws AlreadyBoundException, IOException {
+		if (args.length != 3) {
+			Log.err("Usage: BootstrapNode <registryAddress> <registryPort> <m>");
 		} else {
-			int registryPort = Integer.parseInt(args[0]);
-			String nodeHostname = args[1];
-			int nodePort = Integer.parseInt(args[2]);
-			String nodeName = args[3];
+			String registryHostname = args[0];
+			int registryPort = Integer.parseInt(args[1]);
+			int m = Integer.parseInt(args[2]);
 
-			RMINode node = new RMINode(4, createURL(nodePort, nodeHostname));
-			RMINodeServer stub = (RMINodeServer) UnicastRemoteObject
-					.exportObject(node, 0);
-			Registry fakeDNS = LocateRegistry.getRegistry(registryPort);
-			fakeDNS.rebind(nodeName, stub);
+			Registry fakeDNS = LocateRegistry.getRegistry(registryHostname, registryPort);
+			RMINode node = new RMINode(m, generateInetSocketAddress());
+			fakeDNS.rebind("" + node.getNodeKey(), UnicastRemoteObject.exportObject(node, 0));
+			node.join(null);
+			
+			Log.out("seeded new chord network with node id " + node.getNodeKey());
 		}
 	}
-
-	/**
-	 * Creates a URL given a port and hostname.
-	 * 
-	 * @param port
-	 *            The port.
-	 * @param host
-	 *            The host name.
-	 * @return A URL object.
-	 */
-	protected static URL createURL(int port, String host) {
-		URL url = null;
-		try {
-			url = new URL("http", host, port, null);
-		} catch (MalformedURLException e) {
-			Log.err(e.getMessage());
+	
+	private static InetSocketAddress generateInetSocketAddress() throws IOException{
+		InetAddress localhost = InetAddress.getLocalHost();
+		int port;
+		try (ServerSocket incrediblyInefficientMeansOfAcquiringAPortNumber = new ServerSocket(0)){
+			port = incrediblyInefficientMeansOfAcquiringAPortNumber.getLocalPort();
+			incrediblyInefficientMeansOfAcquiringAPortNumber.close();
 		}
-		return url;
+		return new InetSocketAddress(localhost, port);
 	}
 
 }

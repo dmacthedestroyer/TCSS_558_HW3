@@ -1,3 +1,4 @@
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -13,10 +14,12 @@ public class FingerTable implements Iterable<Finger> {
 
 	private List<Finger> fingers;
 
-	public FingerTable(RMINodeServer forNode) {
+	public FingerTable(RMINodeServer forNode) throws RemoteException {
 		fingers = new ArrayList<Finger>();
-		for (int i = 0; i < forNode.getHashLength(); i++)
-			fingers.add(new Finger((long) (forNode.getNodeKey() + Math.pow(2, i))));
+		int hashLength = forNode.getHashLength();
+		long maxValue = (long) Math.pow(2, hashLength);
+		for (int i = 0; i < hashLength; i++)
+			fingers.add(new Finger((long) ((forNode.getNodeKey() + Math.pow(2, i)) % maxValue)));
 	}
 
 	public Finger getSuccessor() {
@@ -38,6 +41,22 @@ public class FingerTable implements Iterable<Finger> {
 		return fingers.iterator();
 	}
 
+	@Override
+	public String toString() {
+		String s = "";
+		for(Finger f: this) {
+			s += f.getStart() + ":";
+			try{
+			s += f.getNode().getNodeKey();
+			} catch(NullPointerException | RemoteException e){
+				s += "<empty>";
+			}
+			s += "\t";
+		}
+		
+		return s;
+	}
+	
 	/**
 	 * An iterator for lists that allows the programmer to traverse the list in
 	 * reverse order.
