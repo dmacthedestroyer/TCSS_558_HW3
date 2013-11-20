@@ -13,7 +13,7 @@ public class JoinNode {
 
 	public static void main(String[] args) throws IOException, NotBoundException {
 		if (args.length != 3) {
-			Log.err("Usage: BootstrapNode <registryAddress> <registryPort> <nodeKey>");
+			Log.err("Usage: JoinNode <registryAddress> <registryPort> <nodeKey>");
 			return;
 		} 
 		
