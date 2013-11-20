@@ -48,7 +48,7 @@ public class FingerTable implements Iterable<Finger> {
 			s += f.getStart() + ":";
 			try{
 			s += f.getNode().getNodeKey();
-			} catch(RemoteException re){
+			} catch(NullPointerException | RemoteException e){
 				s += "<empty>";
 			}
 			s += "\t";
