@@ -44,10 +44,8 @@ public class RMINode implements RMINodeServer {
 			
 			fingerTable.getSuccessor().setNode(successor);
 			successor.checkPredecessor(this);
-			for(Finger f: fingerTable) {
-				Log.out(getNodeKey() + ": finding successor from node " + fromNetwork.getNodeKey() + " for key " + f.getStart());
+			for(Finger f: fingerTable)
 				f.setNode(fromNetwork.findSuccessor(f.getStart()));
-			}
 		}
 		else {
 			//this is currently the only node in the network, so set all fingers and predecessor to self
