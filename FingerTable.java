@@ -49,7 +49,7 @@ public class FingerTable implements Iterable<Finger> {
 			try{
 			s += f.getNode().getNodeKey();
 			} catch(NullPointerException | RemoteException e){
-				s += "<empty>";
+				s += "-";
 			}
 			s += " ";
 		}
