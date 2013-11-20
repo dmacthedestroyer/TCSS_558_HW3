@@ -44,14 +44,20 @@ public class RMINode implements RMINodeServer {
 			
 			fingerTable.getSuccessor().setNode(successor);
 			successor.checkPredecessor(this);
+			checkPredecessor(fromNetwork.findPredecessor(getNodeKey()));
 			for(Finger f: fingerTable)
 				f.setNode(fromNetwork.findSuccessor(f.getStart()));
-		}
+
+			Log.out(getNodeKey() + ": new node added to network by " + fromNetwork.getNodeKey());
+			Log.out(internalState());		}
 		else {
 			//this is currently the only node in the network, so set all fingers and predecessor to self
 			for(Finger f: fingerTable)
 				f.setNode(this);
 			predecessor = this;
+
+			Log.out(getNodeKey() + ": new network created");
+			Log.out(internalState());		
 		}
 
 		periodicTask.scheduleAtFixedRate(new Runnable() {
