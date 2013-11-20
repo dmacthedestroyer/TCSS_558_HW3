@@ -3,37 +3,47 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.rmi.AlreadyBoundException;
-import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
+import java.util.Random;
 
 
 public class TwoNodeTest {
 
 	public static void main(String[] args) throws AlreadyBoundException, IOException {
-        if (args.length != 2) {
-            Log.err("Usage: RMIController <port> <m>");
+        if (args.length != 3) {
+            Log.err("Usage: RMIController <port> <m> <node count>");
         } else {
             int port = Integer.parseInt(args[0]);
+			int m = Integer.parseInt(args[1]);
+			int nodeCount = Integer.parseInt(args[2]);
+			
+			if(nodeCount > Math.pow(2, m))
+				throw new IllegalArgumentException("node count (" + nodeCount + ") cannot exceed max number of nodes (" + Math.pow(2, m) + ")");
+			
             Registry registry = LocateRegistry.createRegistry(port);
             RemoteLogger fodder = new RemoteLogger();
             registry.bind("__fakeThing", UnicastRemoteObject.exportObject(fodder, 0));
             Log.out("Initialized registry on port " + port);
             
-			int m = Integer.parseInt(args[1]);
+            ArrayList<RMINodeServer> nodes = new ArrayList<RMINodeServer>();
+            Random random = new Random();
 
-			RMINode node = new RMINode(m, generateInetSocketAddress());
-			registry.bind("" + node.getNodeKey(), UnicastRemoteObject.exportObject(node, 0));
-			node.join(null);
+			RMINode seed = new RMINode(m, generateInetSocketAddress());
+			registry.bind("" + seed.getNodeKey(), UnicastRemoteObject.exportObject(seed, 0));
+			seed.join(null);			
+			Log.out("seeded new chord network with node id " + seed.getNodeKey());
+			nodes.add(seed);
 			
-			Log.out("seeded new chord network with node id " + node.getNodeKey());
-
-			RMINode node2 = new RMINode(node.getHashLength(), generateInetSocketAddress());
-			registry.bind("" + node2.getNodeKey(), UnicastRemoteObject.exportObject(node2, 0));
-			
-			node2.join(node);
-			Log.out("Bound new node to id " + node2.getNodeKey());
+			for(int i=1; i<nodeCount; i++){
+				RMINode nodeI = new RMINode(seed.getHashLength(), generateInetSocketAddress());
+				registry.bind("" + nodeI.getNodeKey(), UnicastRemoteObject.exportObject(nodeI, 0));
+				
+				nodeI.join(nodes.get(random.nextInt(nodes.size())));
+				Log.out("Bound new node to id " + nodeI.getNodeKey());
+			}
         }
 	}
 
