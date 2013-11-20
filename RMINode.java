@@ -44,8 +44,8 @@ public class RMINode implements RMINodeServer {
 				throw new IllegalArgumentException("A node with this key already exists in the network");
 			
 			fingerTable.getSuccessor().setNode(successor);
+			predecessor = successor.findPredecessor(successor.getNodeKey());
 			successor.checkPredecessor(this);
-			checkPredecessor(fromNetwork.findPredecessor(getNodeKey()));
 			for(Finger f: fingerTable)
 				f.setNode(fromNetwork.findSuccessor(f.getStart()));
 
