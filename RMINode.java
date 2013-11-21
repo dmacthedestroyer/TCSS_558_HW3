@@ -6,20 +6,47 @@ import java.util.concurrent.TimeUnit;
 
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
+/**
+ * Implements a node in the Chord network.
+ * 
+ * @author Daniel McDonald
+ */
 public class RMINode implements RMINodeServer {
 
+	/**
+	 * The key for the node.
+	 */
 	private long nodeKey;
 	
+	/**
+	 * The length of the hash.
+	 */
 	private int hashLength;
 	
+	/**
+	 * The finger table for this node.
+	 */
 	private FingerTable fingerTable;
 	
+	/**
+	 * The node's predecessor.
+	 */
 	private RMINodeServer predecessor;
 	
+	/**
+	 * The file logger.
+	 */
 	private NodeFileLogger logger;
 	
+	/**
+	 * A periodic task for updating the finger table.
+	 */
 	private final ScheduledExecutorService periodicTask = Executors.newScheduledThreadPool(1);
 	
+	/**
+	 * Log the current state to the output file.
+	 * @param message
+	 */
 	private void logState(String message){
 		String s = getNodeKey() + ": p=";
 		try{
@@ -31,6 +58,13 @@ public class RMINode implements RMINodeServer {
 		logger.logOutput(s + " " + fingerTable.toString() + " --> " + message);
 	}
 	
+	/**
+	 * Constructs an RMINode.
+	 * 
+	 * @param hashLength Length of the hash.
+	 * @param key The key to use.
+	 * @throws RemoteException
+	 */
 	public RMINode(int hashLength, long key) throws RemoteException {
 		double keySpace = Math.pow(2, hashLength);
 		
@@ -40,8 +74,15 @@ public class RMINode implements RMINodeServer {
 		this.hashLength = hashLength;
 		this.nodeKey = key;
 		fingerTable = new FingerTable(this);
+		logger = new NodeFileLogger(key);
 	}
 
+	/**
+	 * Join the given network.
+	 * 
+	 * @param fromNetwork The node to join.
+	 * @throws RemoteException
+	 */
 	public void join(RMINodeServer fromNetwork) throws RemoteException {
 		if(fromNetwork != null) {
 			RMINodeServer successor = fromNetwork.findSuccessor(getNodeKey());
@@ -80,6 +121,15 @@ public class RMINode implements RMINodeServer {
 		}, 5, 1, TimeUnit.SECONDS);
 	}
 	
+	/**
+	 * Tests whether the key is within the given interval.
+	 * @param leftInclusive <code>true</code> if this should be left inclusive.
+	 * @param left The left edge of the interval.
+	 * @param x The key to test.
+	 * @param right The right edge of the interval. 
+	 * @param rightInclusive <code>true</code> if this should be right inclusive.
+	 * @return <code>true</code> if the key is within the interval.
+	 */
 	private boolean isWithinInterval(boolean leftInclusive, long left, long x, long right, boolean rightInclusive) {
 		//if the bounds have been violated, it's not within the interval
 		if((!leftInclusive && left == x) || (!rightInclusive && right == x))
@@ -96,6 +146,12 @@ public class RMINode implements RMINodeServer {
 		return left <= x && x <= right;
 	}
 	
+	/**
+	 * Tests whether the key is in range.
+	 * @param key The key to test.
+	 * @return <code>true</code> if the key is in range
+	 * @throws RemoteException
+	 */
 	private boolean isInRange(long key) throws RemoteException {
 		if(predecessor == null)
 			predecessor = findPredecessor(getNodeKey());
@@ -113,15 +169,21 @@ public class RMINode implements RMINodeServer {
 		}
 	}
 	
-	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public long getNodeKey() { return nodeKey; }
 	
-	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public int getHashLength() { return hashLength; }
 
-	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Serializable get(String key) throws RemoteException {
 		long hash = new KeyHash<String>(key, getHashLength()).getHash();
@@ -131,7 +193,9 @@ public class RMINode implements RMINodeServer {
 		return findSuccessor(hash).get(key);
 	}
 
-	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void put(String key, Serializable value) throws RemoteException {
 		long hash = new KeyHash<String>(key, getHashLength()).getHash();
@@ -141,7 +205,9 @@ public class RMINode implements RMINodeServer {
 		findSuccessor(hash).put(key, value);
 	}
 
-	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void delete(String key) throws RemoteException {
 		long hash = new KeyHash<String>(key, getHashLength()).getHash();
@@ -151,6 +217,9 @@ public class RMINode implements RMINodeServer {
 		findSuccessor(hash).delete(key);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public RMINodeServer findSuccessor(long key) throws RemoteException {
 		//if the key belongs to our interval, then we're the successor
@@ -164,6 +233,9 @@ public class RMINode implements RMINodeServer {
 		return predecessor.findSuccessor(key);
 	}
 	
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public RMINodeServer findPredecessor(long key) throws RemoteException {
 		//if the key belongs to our interval, then return our predecessor
@@ -186,6 +258,9 @@ public class RMINode implements RMINodeServer {
 		return predecessor.findPredecessor(key);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void checkPredecessor(RMINodeServer potentialPredecessor) throws RemoteException {
 		if(predecessor == null || isWithinInterval(false, predecessor.getNodeKey(), potentialPredecessor.getNodeKey(), getNodeKey(), false)) {
@@ -195,6 +270,11 @@ public class RMINode implements RMINodeServer {
 		}
 	}
 	
+	/**
+	 * Fix the given finger in the finger table.
+	 * 
+	 * @param finger The finger to fix.
+	 */
 	private void fixFinger(Finger finger) {
 		try {
 			RMINodeServer successor = findSuccessor(finger.getStart());
@@ -207,6 +287,9 @@ public class RMINode implements RMINodeServer {
 		}
 	}
 		
+	/**
+	 * Stabilize the finger table.
+	 */
 	private void stabilize() {
 		RMINodeServer successor = fingerTable.getSuccessor().getNode();
 		if(successor != null) {
