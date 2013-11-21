@@ -6,8 +6,12 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Random;
 
-
-public class TwoNodeTest {
+/**
+ * Script that creates a Chord network with the specified number of nodes.  This is good for testing how the network gets created and whether it's correct.
+ * @author dmac
+ *
+ */
+public class MultiRandomNodeTest {
 
 	public static void main(String[] args) throws AlreadyBoundException, IOException {
         if (args.length != 3) {
@@ -23,24 +27,25 @@ public class TwoNodeTest {
 			
 			Log.out(String.format("port:%s m:%s node count:%s", port, m, nodeCount));
 			
+			//we'll pull random node ids from this set
 			RandomNumberSet randoms = new RandomNumberSet(keyspace);
 			
             Registry registry = LocateRegistry.createRegistry(port);
             Log.out("Initialized registry on port " + port);
             
+            //keep track of already created nodes so we can join nodes to any arbitrary node already in the network
             ArrayList<RMINodeServer> nodes = new ArrayList<RMINodeServer>();
             Random random = new Random();
-
-			RMINode seed = new RMINode(m, randoms.next());
-			registry.bind("" + seed.getNodeKey(), UnicastRemoteObject.exportObject(seed, 0));
-			seed.join(null);
-			nodes.add(seed);
 			
-			for(int i=1; i<nodeCount; i++){
-				RMINode nodeI = new RMINode(seed.getHashLength(), randoms.next());
+			for(int i=0; i<nodeCount; i++){
+				RMINode nodeI = new RMINode(m, randoms.next());
 				registry.bind("" + nodeI.getNodeKey(), UnicastRemoteObject.exportObject(nodeI, 0));
 				
-				nodeI.join(nodes.get(random.nextInt(nodes.size())));
+				RMINodeServer fromNetwork = null;
+				if(nodes.size() > 0)
+					fromNetwork = nodes.get(random.nextInt(nodes.size())); 
+				
+				nodeI.join(fromNetwork);
 				nodes.add(nodeI);
 			}
         }
