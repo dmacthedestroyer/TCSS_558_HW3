@@ -1,5 +1,8 @@
 import java.rmi.RemoteException;
 
+/** 
+ * The RMINodeServer exposes methods that a node can use to interact with other nodes via RMI.
+ */
 public interface RMINodeServer extends RMINodeClient {
 
 	public int getHashLength() throws RemoteException;
