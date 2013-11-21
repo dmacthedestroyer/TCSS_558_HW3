@@ -17,6 +17,8 @@ public class RMINode implements RMINodeServer {
 	
 	private RMINodeServer predecessor;
 	
+	private NodeFileLogger logger;
+	
 	private final ScheduledExecutorService periodicTask = Executors.newScheduledThreadPool(1);
 	
 	private void logState(String message){
@@ -27,8 +29,7 @@ public class RMINode implements RMINodeServer {
 		catch(Throwable t) {
 			s += "-";
 		}
-		
-		Log.out(s + " " + fingerTable.toString() + " --> " + message);
+		logger.logOutput(s + " " + fingerTable.toString() + " --> " + message);
 	}
 	
 	public RMINode(int hashLength, InetSocketAddress url) throws RemoteException {
