@@ -3,7 +3,11 @@ import java.rmi.NotBoundException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-
+/**
+ * A class for starting the network. Presently useful for testing.
+ * @author dmac
+ *
+ */
 public class JoinNode {
 
 	public static void main(String[] args) throws IOException,

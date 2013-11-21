@@ -5,6 +5,14 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Random;
 
+/**
+ * Defines the FingerTable used by RMINodes.
+ * The FingerTable has the list of fingers for one node.
+ * 
+ * @author dmac
+ *
+ */
+
 public class FingerTable implements Iterable<Finger> {
 
 	/**
@@ -14,6 +22,13 @@ public class FingerTable implements Iterable<Finger> {
 
 	private List<Finger> fingers;
 
+	/**
+	 * FingerTable Constructor.
+	 * Populates the finger table with the nodeKeys of each finger.
+	 * 
+	 * @param forNode
+	 * @throws RemoteException
+	 */
 	public FingerTable(RMINodeServer forNode) throws RemoteException {
 		fingers = new ArrayList<Finger>();
 		int hashLength = forNode.getHashLength();
@@ -22,12 +37,22 @@ public class FingerTable implements Iterable<Finger> {
 			fingers.add(new Finger((long) ((forNode.getNodeKey() + Math.pow(2, i)) % maxValue)));
 	}
 
+	/**
+	 * Returns the first finger in the finger table (the successor).
+	 * 
+	 * @return
+	 */
 	public Finger getSuccessor() {
 		if (fingers.size() == 0)
 			return null;
 		return fingers.get(0);
 	}
 
+	/**
+	 * Returns a random finger that is not the successor.
+	 * 
+	 * @return
+	 */
 	public Finger getRandomFinger() {
 		return fingers.get(random.nextInt(fingers.size()-1)+1);
 	}
@@ -41,6 +66,10 @@ public class FingerTable implements Iterable<Finger> {
 		return fingers.iterator();
 	}
 
+	/**
+	 * The finger is conveted to a human-readable format.
+	 * This is used for logging. 
+	 */
 	@Override
 	public String toString() {
 		String s = "";
