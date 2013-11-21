@@ -2,7 +2,11 @@ import java.io.Serializable;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
+/**
+ * The RMINodeClient exposes methods that a client can use to access the Chord network
 
+ * @author dmac
+ */
 public interface RMINodeClient extends Remote {
 	
 	/**
