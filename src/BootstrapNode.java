@@ -5,7 +5,7 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 
 /**
- * Bootstraps an node and registers it with the RMI registry, given a name and
+ * Bootstraps a node and registers it with the RMI registry, given a name and
  * the port where the registry is located.
  * 
  * @author Jesse Carrigan

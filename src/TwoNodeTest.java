@@ -26,8 +26,6 @@ public class TwoNodeTest {
 			RandomNumberSet randoms = new RandomNumberSet(keyspace);
 			
             Registry registry = LocateRegistry.createRegistry(port);
-            RemoteLogger fodder = new RemoteLogger();
-            registry.bind("__fakeThing", UnicastRemoteObject.exportObject(fodder, 0));
             Log.out("Initialized registry on port " + port);
             
             ArrayList<RMINodeServer> nodes = new ArrayList<RMINodeServer>();
