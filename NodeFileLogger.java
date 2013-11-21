@@ -34,7 +34,12 @@ public class NodeFileLogger {
 	/**
 	 * The separator between the date and the message, as used in Log.
 	 */
-	  private static final String SEPARATOR = ": ";
+	private static final String SEPARATOR = ": ";
+	  
+	/**
+	 * The system-dependent line separator for newlines.
+	 */
+	private static final String LINE_SEPARATOR = System.getProperty("line.separator");
 	  
 	/**
 	 * Creates a NodeFileLogger object.
@@ -55,8 +60,13 @@ public class NodeFileLogger {
 		// Open the file with the following options
 		try (OutputStream output = 
 				Files.newOutputStream(logfile, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND)) {
-			String infoMessage = DATE + SEPARATOR + message + "\n";
-			output.write(message.getBytes());
+			StringBuilder builder = new StringBuilder();
+			builder.append(DATE);
+			builder.append(SEPARATOR);
+			builder.append(message);
+			builder.append(LINE_SEPARATOR);
+			String outputMessage = builder.toString();
+			output.write(outputMessage.getBytes(););
 		} catch (IOException e) {
 			Log.err(e.getMessage());
 		}
