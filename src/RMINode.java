@@ -1,5 +1,4 @@
 import java.io.Serializable;
-import java.net.InetSocketAddress;
 import java.rmi.RemoteException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -32,9 +31,14 @@ public class RMINode implements RMINodeServer {
 		logger.logOutput(s + " " + fingerTable.toString() + " --> " + message);
 	}
 	
-	public RMINode(int hashLength, InetSocketAddress url) throws RemoteException {
+	public RMINode(int hashLength, long key) throws RemoteException {
+		double keySpace = Math.pow(2, hashLength);
+		
+		if(key > keySpace)
+			throw new IllegalArgumentException("key (" + key + ") must be less than the keyspace provided by hashLength (" + keySpace + ")");
+			
 		this.hashLength = hashLength;
-		this.nodeKey = new KeyHash<InetSocketAddress>(url, hashLength).getHash();
+		this.nodeKey = key;
 		fingerTable = new FingerTable(this);
 	}
 
