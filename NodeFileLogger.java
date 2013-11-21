@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Locale;
 
 /**
@@ -61,12 +62,12 @@ public class NodeFileLogger {
 		try (OutputStream output = 
 				Files.newOutputStream(logfile, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.APPEND)) {
 			StringBuilder builder = new StringBuilder();
-			builder.append(DATE);
+			builder.append(DATE.format(new Date()));
 			builder.append(SEPARATOR);
 			builder.append(message);
 			builder.append(LINE_SEPARATOR);
 			String outputMessage = builder.toString();
-			output.write(outputMessage.getBytes(););
+			output.write(outputMessage.getBytes());
 		} catch (IOException e) {
 			Log.err(e.getMessage());
 		}
