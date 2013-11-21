@@ -55,7 +55,8 @@ public class NodeFileLogger {
 	 * @return A path to the file.
 	 */
 	public final Path createLogFile(long key) {
-		Path logfile = Paths.get(System.getProperty("user.home"), "logs", "node" + key);
+		Path logfile = Paths.get(System.getProperty("user.home"), "node" + key);
 		return logfile;
 	}
+	
 }
